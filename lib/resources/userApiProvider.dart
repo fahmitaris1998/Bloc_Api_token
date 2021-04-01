@@ -8,18 +8,19 @@ import 'package:flutter_api_bloc/models/user.dart';
 import 'dart:async';
 
 import 'package:http/io_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 class UserApiProvider{
   Client client = Client();
-  var token = 'eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6W119.i2OVQdxr08dmIqwP7cWOJk5Ye4fySFUqofl-w6FKbm4EwXTStfm0u-sGhDvDVUqNG8Cc7STtUJlawVAP057Jlg';
 
   Future<List<User>> fetchuserlist() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     final _url= 'http://18.139.50.74:8080/checklist';
     print("masuk");
     final response = await client.get(_url,
         headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6W119.i2OVQdxr08dmIqwP7cWOJk5Ye4fySFUqofl-w6FKbm4EwXTStfm0u-sGhDvDVUqNG8Cc7STtUJlawVAP057Jlg',
+      'Authorization': 'Bearer '+ prefs.getString('token'),
     }
     );
     if(response.statusCode==200){
@@ -32,58 +33,58 @@ class UserApiProvider{
   
   Future addData(title,jk,idparent) async{
     print('klik api create');
-    var response = await client.post('http://192.168.13.107/create.php',body:{
+    var response = await client.post('http://18.139.50.74:8080/register',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body:jsonEncode({
       "email": title,
       "password": jk,
       "username":idparent
-    });
-
+    })
+    );
+    print(response.body);
     if(response.statusCode == 200){
       print("berhasil");
       return response;
     }else{
       throw Exception('failed Add data');
     }
-
-
   }
 
   Future Login(title,jk) async{
-
-    try{
-      final ioc = new HttpClient();
-      ioc.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-      final http = new IOClient(ioc);
-      print('klik api Login');
-      var response = await http.post('https://18.139.50.74:8080/login',
-          body:{
-            "password": title,
-            "username":jk
-          });
-
-      print(response.body);
-
-      if(response.statusCode == 200){
-        print("berhasil");
-        return response;
-      }else{
-        throw Exception('failed Add data');
-      }
-
-    }catch(e){
-      print(e.toString());
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    print('klik api login');
+    var response = await client.post('http://18.139.50.74:8080/login',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body:jsonEncode({
+          "password": title,
+          "username": jk
+        })
+    );
+    print(jsonDecode(response.body)['data']['token']);
+    if(response.statusCode == 200){
+      print("berhasil");
+      await prefs.setString('token', jsonDecode(response.body)['data']['token']);
+      return response;
+    }else{
+      throw Exception('failed Add data');
     }
 
   }
 
   Future addcheckklist(title) async{
-
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     print('klik api create');
-    var response = await client.post('https://18.139.50.74:8080/checklist',
+    var response = await client.post('http://18.139.50.74:8080/checklist',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6W119.i2OVQdxr08dmIqwP7cWOJk5Ye4fySFUqofl-w6FKbm4EwXTStfm0u-sGhDvDVUqNG8Cc7STtUJlawVAP057Jlg',
+          'Authorization': 'Bearer '+ prefs.getString('token'),
         },
         body:jsonEncode({
           "name": title,
@@ -100,21 +101,19 @@ class UserApiProvider{
 
 
   Future deletedata(id) async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     print("klik API delete");
-    var url= 'https://18.139.50.74:8080/checklist/'+id;
-    var response = await client.post(url,
+    var url= 'http://18.139.50.74:8080/checklist/'+id;
+    print(url);
+    var response = await client.delete(url,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6W119.i2OVQdxr08dmIqwP7cWOJk5Ye4fySFUqofl-w6FKbm4EwXTStfm0u-sGhDvDVUqNG8Cc7STtUJlawVAP057Jlg',
+          'Authorization': 'Bearer '+prefs.getString('token'),
         }
     );
-
-    if(response.statusCode == 200){
-      return response;
-    }else{
-      throw Exception('failed update data');
-    }
+    print(response.body);
+    print(response.statusCode);
 
   }
 

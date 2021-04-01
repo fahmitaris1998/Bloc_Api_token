@@ -7,6 +7,7 @@ class Repository{
 
   Future<List<User>> fetchalluser() => userapiprovider.fetchuserlist();
   Future addSaveData(String title,String jk,String idparent) => userapiprovider.addData(title,jk,idparent);
+
   Future loginData(String title,String jk) => userapiprovider.Login(title, jk);
 
   Future deleteData(String iduser)=>userapiprovider.deletedata(iduser);

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_api_bloc/ui/register.dart';
 import 'package:flutter_api_bloc/ui/home.dart';
@@ -9,6 +11,7 @@ import 'ui/home.dart';
 import 'ui/home.dart';
 
 void main() {
+  HttpOverrides.global = new MyHttpOverrides();
   runApp(MyApp());
 }
 
@@ -57,5 +60,12 @@ class _MyHomePageState extends State<MyHomePage> {
       //untuk delete slideable, card list di geser
       Home()
      );
+  }
+}
+class MyHttpOverrides extends HttpOverrides{
+  @override
+  HttpClient createHttpClient(SecurityContext context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
   }
 }
